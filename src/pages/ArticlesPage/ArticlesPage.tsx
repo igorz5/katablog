@@ -7,6 +7,7 @@ import {
   useGetArticlesQuery,
   ARTICLES_PER_PAGE,
 } from "../../services/BlogService";
+import { extractError } from "../../services/helpers";
 import { setPage } from "../../store/reducers/articlesSlice";
 
 const Wrapper = styled.div`
@@ -59,7 +60,7 @@ const Pagination = styled((props: PaginationProps) => (
 const ArticlesPage = () => {
   const currentPage = useAppSelector((state) => state.articles.currentPage);
   const dispatch = useAppDispatch();
-  const { data, isError, isLoading } = useGetArticlesQuery(currentPage);
+  const { data, isError, isLoading, error } = useGetArticlesQuery(currentPage);
 
   const handlePagination = (page: number) => {
     dispatch(setPage(page));
@@ -68,7 +69,7 @@ const ArticlesPage = () => {
   if (isError) {
     return (
       <Wrapper>
-        <Alert type="error" message="Something went wrong." />
+        <Alert type="error" message={extractError(error)} />
       </Wrapper>
     );
   }

@@ -44,6 +44,8 @@
     "@typescript-eslint/default-param-last": "off",
     "@typescript-eslint/no-shadow": "off",
     "no-param-reassign": "off",
+    "no-restricted-syntax": "off",
+    "react/jsx-props-no-spreading": "off",
     "react/require-default-props": "off",
     "react/function-component-definition": "off",
     "react/static-property-placement": "off",

@@ -4,6 +4,7 @@ import styled from "styled-components";
 import MDReactComponent from "markdown-react-js";
 import ArticlePreview from "../../components/ArticlePreview/ArticlePreview";
 import { useGetArticleBySlugQuery } from "../../services/BlogService";
+import { extractError } from "../../services/helpers";
 
 const Wrapper = styled.div`
   display: flex;
@@ -24,12 +25,12 @@ const PreviewWrap = styled.div`
 const ArticleViewPage = () => {
   const { slug } = useParams<{ slug: string }>();
 
-  const { data, isLoading, isError } = useGetArticleBySlugQuery(slug);
+  const { data, isLoading, isError, error } = useGetArticleBySlugQuery(slug);
 
   if (isError) {
     return (
       <Wrapper>
-        <Alert type="error" message="Something went wrong." />
+        <Alert type="error" message={extractError(error)} />
       </Wrapper>
     );
   }

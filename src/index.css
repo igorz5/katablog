@@ -34,6 +34,7 @@ a {
 
 img {
   max-width: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -43,5 +44,5 @@ body {
   font-style: normal;
   color: #000;
   background-color: #ebeef3;
-  min-height: 105vh;
+  min-height: 100vh;
 }

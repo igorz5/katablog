@@ -1,10 +1,15 @@
-import { useParams } from "react-router";
+import { useEffect } from "react";
+import { useHistory, useParams } from "react-router";
 import { Alert, Spin } from "antd";
 import styled from "styled-components";
 import MDReactComponent from "markdown-react-js";
 import ArticlePreview from "../../components/ArticlePreview/ArticlePreview";
-import { useGetArticleBySlugQuery } from "../../services/BlogService";
+import {
+  useDeleteArticleMutation,
+  useGetArticleBySlugMutation,
+} from "../../services/BlogService";
 import { extractError } from "../../services/helpers";
+import { useAuth } from "../../hooks/hooks";
 
 const Wrapper = styled.div`
   display: flex;
@@ -23,19 +28,30 @@ const PreviewWrap = styled.div`
 `;
 
 const ArticleViewPage = () => {
+  const { user } = useAuth();
   const { slug } = useParams<{ slug: string }>();
+  const history = useHistory();
 
-  const { data, isLoading, isError, error } = useGetArticleBySlugQuery(slug);
+  const [
+    getArticle,
+    { data: articleData, isLoading: articleIsLoading, error: articleError },
+  ] = useGetArticleBySlugMutation();
+  const [deleteArticle] = useDeleteArticleMutation();
+  const isOwn = user?.username === articleData?.article.author.username;
 
-  if (isError) {
+  useEffect(() => {
+    getArticle({ slug, token: user?.token });
+  }, [user, slug]);
+
+  if (articleError) {
     return (
       <Wrapper>
-        <Alert type="error" message={extractError(error)} />
+        <Alert type="error" message={extractError(articleError)} />
       </Wrapper>
     );
   }
 
-  if (isLoading || !data || !data.article) {
+  if (articleIsLoading) {
     return (
       <Wrapper>
         <Spin size="large" />
@@ -43,13 +59,41 @@ const ArticleViewPage = () => {
     );
   }
 
+  const onEdit = () => {
+    if (!user || !articleData) return;
+
+    history.push(`/articles/${articleData.article.slug}/edit`);
+  };
+
+  const onDelete = async () => {
+    if (!user || !articleData) return;
+
+    const { token } = user;
+    const { slug } = articleData.article;
+
+    await deleteArticle({ token, slug });
+    history.push("/");
+  };
+
   return (
     <Wrapper>
       <Article>
-        <PreviewWrap>
-          <ArticlePreview data={data.article} />
-        </PreviewWrap>
-        <MDReactComponent text={data.article.body} />
+        {articleData && (
+          <>
+            <PreviewWrap>
+              {articleData && (
+                <ArticlePreview
+                  data={articleData.article}
+                  showControls={isOwn}
+                  full={true}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                />
+              )}
+            </PreviewWrap>
+            <MDReactComponent text={articleData.article.body} />
+          </>
+        )}
       </Article>
     </Wrapper>
   );

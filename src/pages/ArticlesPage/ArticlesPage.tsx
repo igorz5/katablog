@@ -1,10 +1,11 @@
+import { useEffect } from "react";
 import { Alert, Pagination as AntdPagination, Spin } from "antd";
 import { PaginationProps } from "antd/lib/pagination";
 import styled from "styled-components";
 import ArticlesList from "../../components/ArticlesList/ArticlesList";
-import { useAppDispatch, useAppSelector } from "../../hooks/hooks";
+import { useAppDispatch, useAppSelector, useAuth } from "../../hooks/hooks";
 import {
-  useGetArticlesQuery,
+  useGetArticlesMutation,
   ARTICLES_PER_PAGE,
 } from "../../services/BlogService";
 import { extractError } from "../../services/helpers";
@@ -60,7 +61,13 @@ const Pagination = styled((props: PaginationProps) => (
 const ArticlesPage = () => {
   const currentPage = useAppSelector((state) => state.articles.currentPage);
   const dispatch = useAppDispatch();
-  const { data, isError, isLoading, error } = useGetArticlesQuery(currentPage);
+  const { user } = useAuth();
+  const [getArticles, { data, isError, isLoading, error }] =
+    useGetArticlesMutation();
+
+  useEffect(() => {
+    getArticles({ page: currentPage, token: user?.token });
+  }, [currentPage, user]);
 
   const handlePagination = (page: number) => {
     dispatch(setPage(page));

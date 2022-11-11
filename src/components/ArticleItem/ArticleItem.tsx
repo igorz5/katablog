@@ -5,6 +5,8 @@ import { IArticle } from "../../types/IArticle";
 import ArticlePreview from "../ArticlePreview/ArticlePreview";
 
 const Wrapper = styled.div`
+  display: flex;
+  flex-direction: column;
   padding: 15px;
   border-radius: 4px;
   background-color: #fff;

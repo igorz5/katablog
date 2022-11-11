@@ -7,19 +7,44 @@ export const ARTICLES_PER_PAGE = 20;
 
 const BASE_URL = "https://blog.kata.academy/api";
 
+function applyToken(token?: string): { [key: string]: string } {
+  const headers: { [key: string]: string } = {
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return headers;
+}
+
 export const api = createApi({
   reducerPath: "blog",
   baseQuery: fetchBaseQuery({ baseUrl: BASE_URL }),
   endpoints: (build) => ({
-    getArticles: build.query<
+    getArticles: build.mutation<
       { articles: IArticle[]; articlesCount: number },
-      number
+      { token?: string; page: number }
     >({
-      query: (page = 0) => `/articles?offset=${(page - 1) * ARTICLES_PER_PAGE}`,
+      query: ({ token, page = 0 }) => {
+        return {
+          url: `/articles?offset=${(page - 1) * ARTICLES_PER_PAGE}`,
+          headers: applyToken(token),
+        };
+      },
     }),
 
-    getArticleBySlug: build.query<{ article: IArticle }, string>({
-      query: (slug) => `/articles/${slug}`,
+    getArticleBySlug: build.mutation<
+      { article: IArticle },
+      { token?: string; slug: string }
+    >({
+      query: ({ token, slug }) => {
+        return {
+          url: `/articles/${slug}`,
+          headers: applyToken(token),
+        };
+      },
     }),
 
     registerUser: build.mutation<
@@ -62,21 +87,32 @@ export const api = createApi({
       },
     }),
 
+    getCurrentUser: build.mutation<{ user: IUser }, { token: string }>({
+      query: ({ token }) => {
+        return {
+          url: "/user",
+          method: "get",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        };
+      },
+    }),
+
     editUser: build.mutation<
       { user: IUser },
       {
+        token: string;
         username?: string;
         email?: string;
         password?: string;
-        imageUrl?: string;
-        token: string;
+        image?: string;
       }
     >({
-      query: (data) => {
-        const { token, imageUrl, ...restData } = data;
+      query: ({ token, ...restData }) => {
         const body = {
           user: {
-            image: imageUrl,
             ...restData,
           },
         };
@@ -92,13 +128,120 @@ export const api = createApi({
         };
       },
     }),
+
+    createArticle: build.mutation<
+      { article: IArticle },
+      {
+        token: string;
+        title: string;
+        description: string;
+        body: string;
+        tagList?: string[];
+      }
+    >({
+      query: ({ token, tagList = [], ...restData }) => {
+        const body = {
+          article: {
+            tagList,
+            ...restData,
+          },
+        };
+
+        return {
+          url: "/articles",
+          method: "post",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body,
+        };
+      },
+    }),
+
+    deleteArticle: build.mutation<void, { token: string; slug: string }>({
+      query: ({ token, slug }) => {
+        return {
+          url: `/articles/${slug}`,
+          method: "delete",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        };
+      },
+    }),
+
+    editArticle: build.mutation<
+      { article: IArticle },
+      {
+        token: string;
+        slug: string;
+        title: string;
+        description: string;
+        body: string;
+        tagList?: string[];
+      }
+    >({
+      query: ({ token, slug, ...restData }) => {
+        const body = { article: { ...restData } };
+        return {
+          url: `/articles/${slug}`,
+          method: "put",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body,
+        };
+      },
+    }),
+
+    favoriteArticle: build.mutation<
+      { article: IArticle },
+      { token: string; slug: string }
+    >({
+      query: ({ token, slug }) => {
+        return {
+          url: `/articles/${slug}/favorite`,
+          method: "post",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        };
+      },
+    }),
+
+    unfavoriteArticle: build.mutation<
+      { article: IArticle },
+      { token: string; slug: string }
+    >({
+      query: ({ token, slug }) => {
+        return {
+          url: `/articles/${slug}/favorite`,
+          method: "delete",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        };
+      },
+    }),
   }),
 });
 
 export const {
-  useGetArticlesQuery,
-  useGetArticleBySlugQuery,
+  useGetArticlesMutation,
+  useGetArticleBySlugMutation,
   useRegisterUserMutation,
   useLoginUserMutation,
+  useGetCurrentUserMutation,
   useEditUserMutation,
+  useCreateArticleMutation,
+  useDeleteArticleMutation,
+  useEditArticleMutation,
+  useFavoriteArticleMutation,
+  useUnfavoriteArticleMutation,
+  util: { updateQueryData },
 } = api;

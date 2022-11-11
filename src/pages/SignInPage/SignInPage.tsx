@@ -1,11 +1,12 @@
+import { useId } from "react";
 import { Alert } from "antd";
 import { useForm } from "react-hook-form";
 import { Link, Redirect } from "react-router-dom";
 import styled from "styled-components";
-import { emailPattern } from "../../components/constants/patterns";
-import Form from "../../components/Form/Form";
-import FormInput from "../../components/FormInput/FormInput";
-import { useAppDispatch } from "../../hooks/hooks";
+import { emailPattern } from "../../constants/patterns";
+import Form from "../../components/UI/Form/Form";
+import FormInput from "../../components/UI/FormInput/FormInput";
+import { useAppDispatch, useAuth } from "../../hooks/hooks";
 import { useLoginUserMutation } from "../../services/BlogService";
 import {
   extractError,
@@ -14,6 +15,7 @@ import {
   saveUser,
 } from "../../services/helpers";
 import { setUser } from "../../store/reducers/authSlice";
+import FormButton from "../../components/UI/FormButton/FormButton";
 
 const Wrapper = styled.div`
   padding: 48px 32px;
@@ -33,24 +35,6 @@ const Wrapper = styled.div`
 const FormInner = styled.div`
   width: 100%;
   margin-bottom: 21px;
-`;
-
-const Button = styled.button.attrs({ type: "submit" })`
-  padding: 8px 16px;
-  width: 100%;
-  font-weight: 400;
-  font-size: 16px;
-  line-height: 24px;
-  color: #fff;
-  background-color: #1890ff;
-  border-radius: 4px;
-  transition: 0.3s;
-  margin-bottom: 8px;
-
-  &:hover,
-  &:focus {
-    background-color: #1880ff;
-  }
 `;
 
 const FormBottomText = styled.div`
@@ -78,7 +62,33 @@ interface FormValues {
   password: string;
 }
 
+const formInputs = [
+  {
+    label: "Email",
+    placeholder: "Email",
+    id: "email",
+    error: "Must be correct email",
+    registerOptions: {
+      required: true,
+      pattern: emailPattern,
+    },
+  },
+  {
+    label: "Password",
+    placeholder: "Password",
+    id: "password",
+    error: "Must be in range of 6 to 40",
+    registerOptions: {
+      required: true,
+      minLength: 6,
+      maxLength: 40,
+    },
+  },
+];
+
 const SignInPage = () => {
+  const { user } = useAuth();
+  const inputId = useId();
   const {
     register,
     handleSubmit,
@@ -107,6 +117,12 @@ const SignInPage = () => {
       if (errors.password) {
         setError("password", { message: errors.password });
       }
+
+      if (errors["email or password"]) {
+        const msg = `email or password ${errors["email or password"]}`;
+        setError("email", { message: msg });
+        setError("password", { message: msg });
+      }
     }
 
     if ("data" in res && "user" in res.data) {
@@ -117,33 +133,34 @@ const SignInPage = () => {
     }
   });
 
+  if (user) {
+    return <Redirect to="/" />;
+  }
+
   return (
     <Wrapper>
       <Form title="Sign In" onSubmit={onSubmit} isLoading={isLoading}>
         <FormInner>
-          <FormInput
-            label="Email address"
-            id="form-emailaddress"
-            placeholder="Email address"
-            isError={Boolean(errors.email)}
-            error={errors.email?.message || "Must be correct email"}
-            {...register("email", { required: true, pattern: emailPattern })}
-          />
-          <FormInput
-            label="Password"
-            id="form-password"
-            placeholder="Password"
-            type="password"
-            isError={Boolean(errors.password)}
-            error={errors.password?.message || "Must be in range of 6 to 40"}
-            {...register("password", {
-              required: true,
-              minLength: 6,
-              maxLength: 40,
-            })}
-          />
+          {formInputs.map((item) => {
+            const key = item.id as keyof FormValues;
+            const error = errors[key];
+            const isError = Boolean(error);
+            const options = item.registerOptions;
+
+            return (
+              <FormInput
+                label={item.label}
+                id={`${item.id}-${inputId}`}
+                key={item.id}
+                placeholder={item.placeholder}
+                isError={isError}
+                error={error?.message || item.error}
+                {...register(key, options)}
+              />
+            );
+          })}
         </FormInner>
-        <Button>Login</Button>
+        <FormButton>Login</FormButton>
         <FormBottomText>
           Don’t have an account?
           <FormLink to="/sign-in"> Sign Up</FormLink>.

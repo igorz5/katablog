@@ -1,9 +1,12 @@
+import { FC } from "react";
 import { Link } from "react-router-dom";
 
-import styled, { css } from "styled-components";
+import styled from "styled-components";
 import { useAuth } from "../../hooks/hooks";
 
-import userImage from "../../assets/user.png";
+import userImage from "../../assets/user.jpg";
+import { clearUser } from "../../services/helpers";
+import Button from "../UI/Button/Button";
 
 const Wrapper = styled.header`
   position: relative;
@@ -29,7 +32,9 @@ const Logo = styled.div`
   line-height: 28px;
 
   @media screen and (max-width: 768px) {
-    display: none;
+    font-size: 32px;
+    line-height: 38px;
+    margin-bottom: 10px;
   }
 `;
 
@@ -43,46 +48,30 @@ const HeaderRight = styled.div`
   }
 `;
 
-const Button = css`
+const SignInLink = styled(Link)`
+  color: rgba(0, 0, 0, 0.85);
+  margin-right: 19px;
+  transition: 0.15s;
+`;
+
+const SignUpLink = styled(Link)`
   display: inline-block;
   padding: 6px 18px 10px;
   border-radius: 5px;
   transition: 0.15s;
-
-  &:hover,
-  &:focus {
-    transform: scale(0.9);
-  }
-`;
-
-const SignInLink = styled(Link)`
-  ${Button}
-
-  color: rgba(0, 0, 0, 0.85);
-  margin-right: 19px;
-
-  &:hover {
-    color: rgba(0, 0, 0, 0.85);
-  }
-`;
-
-const SignUpLink = styled(Link)`
-  ${Button}
-
   border: 1px solid #52c41a;
   color: #52c41a;
 
   &:hover {
+    transform: scale(0.9);
     color: #52c41a;
   }
 `;
 
-const LogoutButton = styled.button`
-  ${Button}
-
-  border: 1px solid rgba(0, 0, 0, 0.75);
-  color: rgba(0, 0, 0, 0.75);
-
+const LogoutButton = styled(Button).attrs({
+  size: "large",
+  color: "rgba(0, 0, 0, 0.75)",
+})`
   @media screen and (max-width: 768px) {
     display: none;
   }
@@ -121,8 +110,9 @@ const UserImage = styled.img`
 `;
 
 const CreateArticleLink = styled(Link)`
-  ${Button}
-
+  display: inline-block;
+  border-radius: 5px;
+  transition: 0.15s;
   font-size: 14px;
   line-height: 22px;
   padding: 6px 10px 5px;
@@ -131,6 +121,7 @@ const CreateArticleLink = styled(Link)`
   border: 1px solid #52c41a;
 
   &:hover {
+    transform: scale(0.9);
     color: #52c41a;
   }
 
@@ -139,8 +130,9 @@ const CreateArticleLink = styled(Link)`
   }
 `;
 
-const MobileButtons = styled.div`
+const MobileControls = styled.div`
   display: none;
+
   @media screen and (max-width: 768px) {
     display: block;
 
@@ -150,8 +142,18 @@ const MobileButtons = styled.div`
   }
 `;
 
-const Header = () => {
+export interface HeaderProps {
+  isLoggingIn?: boolean;
+}
+
+const Header: FC<HeaderProps> = ({ isLoggingIn }) => {
   const { user, logout } = useAuth();
+
+  const onLogout = () => {
+    clearUser();
+
+    logout();
+  };
 
   if (user) {
     return (
@@ -169,13 +171,13 @@ const Header = () => {
             </UserName>
             <UserImage src={user.image || userImage} alt="User profile image" />
           </UserInfo>
-          <LogoutButton onClick={() => logout()}>Logout</LogoutButton>
-          <MobileButtons>
+          <LogoutButton onClick={onLogout}>Logout</LogoutButton>
+          <MobileControls>
             <CreateArticleLink to="/new-article">
               Create article
             </CreateArticleLink>
             <LogoutButton onClick={() => logout()}>Logout</LogoutButton>
-          </MobileButtons>
+          </MobileControls>
         </HeaderRight>
       </Wrapper>
     );
@@ -187,8 +189,12 @@ const Header = () => {
         <Link to="/">Realworld Blog</Link>
       </Logo>
       <HeaderRight>
-        <SignInLink to="/sign-in">Sign In</SignInLink>
-        <SignUpLink to="/sign-up">Sign Up</SignUpLink>
+        {!isLoggingIn && (
+          <>
+            <SignInLink to="/sign-in">Sign In</SignInLink>
+            <SignUpLink to="/sign-up">Sign Up</SignUpLink>
+          </>
+        )}
       </HeaderRight>
     </Wrapper>
   );

@@ -52,6 +52,7 @@ export interface FormCheckboxProps
   extends Omit<HTMLAttributes<HTMLInputElement>, "type"> {
   text?: string;
   isError?: boolean;
+  error?: string;
 }
 
 const FormCheckbox = forwardRef<HTMLInputElement, FormCheckboxProps>(

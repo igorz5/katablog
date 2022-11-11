@@ -23,7 +23,7 @@ textarea {
   background: none;
 }
 
-button {
+button:not(:disabled) {
   cursor: pointer;
 }
 

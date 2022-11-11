@@ -1,10 +1,10 @@
+import { useId } from "react";
 import { Alert } from "antd";
-import { useForm, useWatch } from "react-hook-form";
-import { Redirect } from "react-router";
+import { useForm } from "react-hook-form";
 import styled from "styled-components";
-import { emailPattern, urlPattern } from "../../components/constants/patterns";
-import Form from "../../components/Form/Form";
-import FormInput from "../../components/FormInput/FormInput";
+import { emailPattern, urlPattern } from "../../constants/patterns";
+import Form from "../../components/UI/Form/Form";
+import FormInput from "../../components/UI/FormInput/FormInput";
 import { useAppDispatch, useAuth } from "../../hooks/hooks";
 import { useEditUserMutation } from "../../services/BlogService";
 import {
@@ -14,6 +14,7 @@ import {
   saveUser,
 } from "../../services/helpers";
 import { setUser } from "../../store/reducers/authSlice";
+import FormButton from "../../components/UI/FormButton/FormButton";
 
 const Wrapper = styled.div`
   padding: 48px 32px;
@@ -35,29 +36,6 @@ const FormInner = styled.div`
   margin-bottom: 21px;
 `;
 
-const Button = styled.button.attrs({ type: "submit" })`
-  padding: 8px 16px;
-  width: 100%;
-  font-weight: 400;
-  font-size: 16px;
-  line-height: 24px;
-  color: #fff;
-  background-color: #1890ff;
-  border-radius: 4px;
-  transition: 0.3s;
-  margin-bottom: 8px;
-
-  &:hover,
-  &:focus {
-    background-color: #1880ff;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    pointer-events: none;
-  }
-`;
-
 const StyledAlert = styled(Alert)`
   margin-top: 12px;
 `;
@@ -66,18 +44,60 @@ interface FormValues {
   username: string;
   email: string;
   password: string;
-  imageUrl: string;
+  image: string;
 }
+
+const formInputs = [
+  {
+    label: "Username",
+    placeholder: "Username",
+    id: "username",
+    error: "Must be in range of 3 to 20",
+    registerOptions: {
+      minLength: 3,
+      maxLength: 20,
+    },
+  },
+  {
+    label: "Email",
+    placeholder: "Email",
+    id: "email",
+    error: "Must be correct email",
+    registerOptions: {
+      pattern: emailPattern,
+    },
+  },
+  {
+    label: "Password",
+    placeholder: "Password",
+    id: "password",
+    error: "Must be in range of 6 to 40",
+    hide: true,
+    registerOptions: {
+      minLength: 6,
+      maxLength: 40,
+    },
+  },
+  {
+    label: "Image (url)",
+    placeholder: "URL",
+    id: "image",
+    error: "Must be correct URL",
+    registerOptions: {
+      pattern: urlPattern,
+    },
+  },
+];
 
 const EditProfilePage = () => {
   const dispatch = useAppDispatch();
   const { user } = useAuth();
+  const inputId = useId();
 
   const {
     register,
     handleSubmit,
     setError,
-    control,
     formState: { errors },
   } = useForm<FormValues>({
     defaultValues: {
@@ -86,22 +106,18 @@ const EditProfilePage = () => {
     },
   });
 
-  const values = useWatch({
-    control,
-  });
-
   const [editUser, { isSuccess: isEditSuccess, error: editError, isLoading }] =
     useEditUserMutation();
 
   const onSubmit = handleSubmit(async (data) => {
     if (!user) return;
 
-    const { username, email, password, imageUrl } = data;
+    const { username, email, password, image } = data;
     const res = await editUser({
       username,
       email,
       password,
-      imageUrl,
+      image,
       token: user.token,
     });
 
@@ -120,8 +136,8 @@ const EditProfilePage = () => {
         setError("password", { message: errors.password });
       }
 
-      if (errors.imageUrl) {
-        setError("imageUrl", { message: errors.imageUrl });
+      if (errors.image) {
+        setError("image", { message: errors.image });
       }
     }
 
@@ -133,77 +149,31 @@ const EditProfilePage = () => {
     }
   });
 
-  const renderSaveButton = () => {
-    if (!user) return null;
-
-    let disabled = true;
-    console.log(values, user);
-
-    if (
-      values.password ||
-      values.imageUrl ||
-      values.email !== user.email ||
-      values.username !== user.username
-    ) {
-      disabled = false;
-    }
-
-    return <Button disabled={disabled}>Save</Button>;
-  };
-
-  if (!user) {
-    return <Redirect to="/" />;
-  }
-
   return (
     <Wrapper>
       <Form title="Edit Profile" onSubmit={onSubmit} isLoading={isLoading}>
         <FormInner>
-          <FormInput
-            label="Username"
-            id="form-username"
-            placeholder="Username"
-            isError={Boolean(errors.username)}
-            error={errors.username?.message || "Must be in range of 3 to 20"}
-            {...register("username", {
-              minLength: 3,
-              maxLength: 20,
-            })}
-          />
-          <FormInput
-            label="Email address"
-            id="form-emailaddress"
-            placeholder="Email address"
-            isError={Boolean(errors.email)}
-            error={errors.email?.message || "Must be correct email"}
-            {...register("email", {
-              pattern: emailPattern,
-            })}
-          />
-          <FormInput
-            label="Password"
-            id="form-password"
-            placeholder="Password"
-            type="password"
-            isError={Boolean(errors.password)}
-            error={errors.password?.message || "Must be in range of 6 to 40"}
-            {...register("password", {
-              minLength: 6,
-              maxLength: 40,
-            })}
-          />
-          <FormInput
-            label="Image (url)"
-            id="form-image"
-            placeholder="URL"
-            isError={Boolean(errors.imageUrl)}
-            error={errors.imageUrl?.message || "Must be correct url"}
-            {...register("imageUrl", {
-              pattern: urlPattern,
-            })}
-          />
+          {formInputs.map((item) => {
+            const key = item.id as keyof FormValues;
+            const error = errors[key];
+            const isError = Boolean(error);
+            const options = item.registerOptions;
+
+            return (
+              <FormInput
+                label={item.label}
+                id={`${item.id}-${inputId}`}
+                key={item.id}
+                type={item.hide ? "password" : "text"}
+                placeholder={item.placeholder}
+                isError={isError}
+                error={error?.message || item.error}
+                {...register(key, options)}
+              />
+            );
+          })}
         </FormInner>
-        {renderSaveButton()}
+        <FormButton>Save</FormButton>
         {isFetchBaseQueryError(editError) && editError.status !== 422 && (
           <StyledAlert type="error" message={extractError(editError)} />
         )}

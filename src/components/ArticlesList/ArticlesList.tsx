@@ -9,14 +9,14 @@ const Wrapper = styled.ul`
   flex-direction: column;
   align-items: flex-stretch;
   margin-bottom: 0;
+`;
 
-  & > li {
-    width: 100%;
-    margin-bottom: 26px;
+const Item = styled.li`
+  width: 100%;
+  margin-bottom: 26px;
 
-    &:last-child {
-      margin-bottom: 0;
-    }
+  &:last-child {
+    margin-bottom: 0;
   }
 `;
 
@@ -29,9 +29,9 @@ const ArticlesList: FC<ArticlesListProps> = ({ articles }) => {
     <Wrapper>
       {articles &&
         articles.map((item) => (
-          <li key={item.slug}>
+          <Item key={item.slug}>
             <ArticleItem data={item} />
-          </li>
+          </Item>
         ))}
     </Wrapper>
   );

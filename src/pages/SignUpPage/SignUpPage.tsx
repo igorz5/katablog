@@ -1,17 +1,20 @@
+import { useId } from "react";
 import { Alert } from "antd";
-import { useForm } from "react-hook-form";
+import { useForm, Validate } from "react-hook-form";
 import { Link, Redirect } from "react-router-dom";
 import styled from "styled-components";
-import { emailPattern } from "../../components/constants/patterns";
-import Form from "../../components/Form/Form";
-import FormCheckbox from "../../components/FormCheckbox/FormCheckbox";
-import FormInput from "../../components/FormInput/FormInput";
+import { emailPattern } from "../../constants/patterns";
+import Form from "../../components/UI/Form/Form";
+import FormCheckbox from "../../components/UI/FormCheckbox/FormCheckbox";
+import FormInput from "../../components/UI/FormInput/FormInput";
 import { useRegisterUserMutation } from "../../services/BlogService";
 import {
   extractError,
   isFetchBaseQueryError,
   isWrongDataError,
 } from "../../services/helpers";
+import FormButton from "../../components/UI/FormButton/FormButton";
+import { useAuth } from "../../hooks/hooks";
 
 const Wrapper = styled.div`
   padding: 48px 32px;
@@ -39,24 +42,6 @@ const FormCheckboxWrap = styled.div`
   margin-bottom: 21px;
 `;
 
-const Button = styled.button.attrs({ type: "submit" })`
-  padding: 8px 16px;
-  width: 100%;
-  font-weight: 400;
-  font-size: 16px;
-  line-height: 24px;
-  color: #fff;
-  background-color: #1890ff;
-  border-radius: 4px;
-  transition: 0.3s;
-  margin-bottom: 8px;
-
-  &:hover,
-  &:focus {
-    background-color: #1880ff;
-  }
-`;
-
 const FormBottomText = styled.p`
   font-weight: 400;
   font-size: 12px;
@@ -74,6 +59,14 @@ const FormLink = styled(Link)`
   }
 `;
 
+const CheckboxErrorText = styled.p`
+  color: #f5222d;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 22px;
+  margin-bottom: 10px;
+`;
+
 const StyledAlert = styled(Alert)`
   margin-top: 12px;
 `;
@@ -86,7 +79,59 @@ interface FormValues {
   infocheck: boolean;
 }
 
+const formInputs = [
+  {
+    label: "Username",
+    placeholder: "Username",
+    id: "username",
+    error: "Must be in range of 3 to 20",
+    registerOptions: {
+      required: true,
+      minLength: 3,
+      maxLength: 20,
+    },
+  },
+  {
+    label: "Email",
+    placeholder: "Email",
+    id: "email",
+    error: "Must be correct email",
+    registerOptions: {
+      required: true,
+      pattern: emailPattern,
+    },
+  },
+  {
+    label: "Password",
+    placeholder: "Password",
+    id: "password",
+    error: "Must be in range of 6 to 40",
+    hide: true,
+    registerOptions: {
+      required: true,
+      minLength: 6,
+      maxLength: 40,
+    },
+  },
+  {
+    label: "Repeat password",
+    placeholder: "Password",
+    id: "repeatPassword",
+    error: "Passwords must match",
+    hide: true,
+    registerOptions: {
+      required: true,
+      validate: (value: string | boolean, allValues: FormValues) => {
+        const { password } = allValues;
+        return password === value;
+      },
+    },
+  },
+];
+
 const SignUpPage = () => {
+  const { user } = useAuth();
+  const inputId = useId();
   const {
     register,
     handleSubmit,
@@ -120,6 +165,10 @@ const SignUpPage = () => {
     }
   });
 
+  if (user) {
+    return <Redirect to="/" />;
+  }
+
   return (
     <Wrapper>
       <Form
@@ -128,54 +177,34 @@ const SignUpPage = () => {
         onSubmit={onSubmit}
       >
         <FormInner>
-          <FormInput
-            label="Username"
-            id="form-username"
-            placeholder="Username"
-            isError={Boolean(errors.username)}
-            error={errors.username?.message || "Must be in range of 3 to 20"}
-            {...register("username", {
-              required: true,
-              minLength: 3,
-              maxLength: 20,
-            })}
-          />
-          <FormInput
-            label="Email address"
-            id="form-emailaddress"
-            placeholder="Email address"
-            isError={Boolean(errors.email)}
-            error={errors.email?.message || "Must be correct email"}
-            {...register("email", { required: true, pattern: emailPattern })}
-          />
-          <FormInput
-            label="Password"
-            id="form-password"
-            placeholder="Password"
-            type="password"
-            isError={Boolean(errors.password)}
-            error={errors.password?.message || "Must be in range of 6 to 40"}
-            {...register("password", {
-              required: true,
-              minLength: 6,
-              maxLength: 40,
-            })}
-          />
-          <FormInput
-            label="Repeat password"
-            id="form-repeatpassword"
-            placeholder="Password"
-            type="password"
-            isError={Boolean(errors.repeatPassword)}
-            error="Passwords must match"
-            {...register("repeatPassword", {
-              required: true,
-              validate: (value) => {
-                const { password } = getValues();
-                return password === value;
-              },
-            })}
-          />
+          {formInputs.map((item) => {
+            const key = item.id as keyof FormValues;
+            const error = errors[key];
+            const isError = Boolean(error);
+            const options = item.registerOptions;
+
+            let validate: Validate<string | boolean> | undefined;
+            if (options.validate) {
+              validate = (value) => {
+                return options.validate(value, getValues());
+              };
+            }
+            return (
+              <FormInput
+                label={item.label}
+                id={`${item.id}-${inputId}`}
+                key={item.id}
+                placeholder={item.placeholder}
+                type={item.hide ? "password" : "text"}
+                isError={isError}
+                error={error?.message || item.error}
+                {...register(key, {
+                  ...options,
+                  validate,
+                })}
+              />
+            );
+          })}
         </FormInner>
         <FormCheckboxWrap>
           <FormCheckbox
@@ -188,7 +217,12 @@ const SignUpPage = () => {
             })}
           />
         </FormCheckboxWrap>
-        <Button>Create</Button>
+        {Boolean(errors.infocheck) && (
+          <CheckboxErrorText>
+            You must agree for the processing of personal information
+          </CheckboxErrorText>
+        )}
+        <FormButton>Create</FormButton>
         <FormBottomText>
           Already have an account?
           <FormLink to="/sign-in"> Sign In</FormLink>.

@@ -1,5 +1,7 @@
 import { forwardRef, HTMLAttributes } from "react";
 import styled from "styled-components";
+import FormLabel from "../FormLabel/FormLabel";
+import Input from "../Input/Input";
 
 const Wrapper = styled.div`
   width: 100%;
@@ -10,23 +12,6 @@ const Wrapper = styled.div`
   &:last-child {
     margin-bottom: 0;
   }
-`;
-
-const Label = styled.label`
-  color: #262626;
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 22px;
-  margin-bottom: 2px;
-`;
-
-const Input = styled.input<{ isError?: boolean }>`
-  color: rgba(0, 0, 0, 0.75);
-  border: 1px solid #d9d9d9;
-  padding: 8px 12px;
-  border-radius: 4px;
-
-  ${({ isError }) => (isError ? "border-color: #f5222d;" : "")}
 `;
 
 const ErrorText = styled.p`
@@ -49,7 +34,7 @@ const FormInput = forwardRef<HTMLInputElement, FormInputProps>((props, ref) => {
   const { id, type, label, isError, error, ...restProps } = props;
   return (
     <Wrapper>
-      <Label htmlFor={id}>{label}</Label>
+      <FormLabel htmlFor={id}>{label}</FormLabel>
       <Input
         isError={isError}
         id={id}

@@ -67,7 +67,7 @@ const formInputs = [
     label: "Email",
     placeholder: "Email",
     id: "email",
-    error: "Must be correct email",
+    error: "must be correct email",
     registerOptions: {
       required: true,
       pattern: emailPattern,
@@ -77,7 +77,8 @@ const formInputs = [
     label: "Password",
     placeholder: "Password",
     id: "password",
-    error: "Must be in range of 6 to 40",
+    error: "must be of 6 to 40 long",
+    hide: true,
     registerOptions: {
       required: true,
       minLength: 6,
@@ -152,6 +153,7 @@ const SignInPage = () => {
                 label={item.label}
                 id={`${item.id}-${inputId}`}
                 key={item.id}
+                type={item.hide ? "password" : "text"}
                 placeholder={item.placeholder}
                 isError={isError}
                 error={error?.message || item.error}

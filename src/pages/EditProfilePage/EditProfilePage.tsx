@@ -52,7 +52,7 @@ const formInputs = [
     label: "Username",
     placeholder: "Username",
     id: "username",
-    error: "Must be in range of 3 to 20",
+    error: "must be 3 to 20 long",
     registerOptions: {
       minLength: 3,
       maxLength: 20,
@@ -62,7 +62,7 @@ const formInputs = [
     label: "Email",
     placeholder: "Email",
     id: "email",
-    error: "Must be correct email",
+    error: "must be correct email",
     registerOptions: {
       pattern: emailPattern,
     },
@@ -71,7 +71,7 @@ const formInputs = [
     label: "Password",
     placeholder: "Password",
     id: "password",
-    error: "Must be in range of 6 to 40",
+    error: "must be 6 to 40 long",
     hide: true,
     registerOptions: {
       minLength: 6,
@@ -82,7 +82,7 @@ const formInputs = [
     label: "Image (url)",
     placeholder: "URL",
     id: "image",
-    error: "Must be correct URL",
+    error: "must be correct URL",
     registerOptions: {
       pattern: urlPattern,
     },
